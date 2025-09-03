@@ -1,0 +1,22 @@
+[server]
+port = "8083"
+read_timeout_seconds = "30s"
+write_timeout_seconds = "30s"
+idle_timeout_seconds = "60s"
+
+[database]
+# DSN will be loaded from PG_DSN environment variable
+
+[embed]
+model = "text-embedding-3-small"
+endpoint = "https://api.openai.com/v1/embeddings"
+timeout_seconds = "10s"
+cache_ttl_seconds = "24h"
+# API key will be loaded from OPENAI_API_KEY environment variable
+
+[rag]
+top_n = 20
+top_k = 5
+ann_probes = 10
+min_confidence = 0.7
+max_query_length = 1000
