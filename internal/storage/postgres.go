@@ -163,12 +163,10 @@ func (r *postgresRepository) InitRAGTables(ctx context.Context) error {
 func (r *postgresRepository) SearchSimilarReviews(ctx context.Context, queryEmbedding []float32, appID string, topN int, annProbes int) ([]types.RetrievedReview, error) {
 	queryEmbeddingVec := pgvector.NewVector(queryEmbedding)
 
-	// Build the WHERE clause for filtering
 	whereClause := "WHERE re.app_id = $1"
 	args := []any{queryEmbeddingVec, appID}
 	argIndex := 3
 
-	// Add ANN probes and limit
 	args = append(args, annProbes, topN)
 
 	query := fmt.Sprintf(`
@@ -266,15 +264,12 @@ func (r *postgresRepository) GetReviewDetails(ctx context.Context, reviewIDs []s
 }
 
 func (r *postgresRepository) RAGRetrieval(ctx context.Context, queryEmbedding []float32, topK int, appID string) ([]types.RetrievedReview, error) {
-	// Normalize the query embedding (L2 normalization)
 	queryVec := pgvector.NewVector(queryEmbedding)
 
-	// Set default topK if not specified
 	if topK <= 0 {
 		topK = 20
 	}
 
-	// Prepare the SQL query with optional filters
 	query := `
 		SELECT
 			cr.id,
@@ -290,12 +285,11 @@ func (r *postgresRepository) RAGRetrieval(ctx context.Context, queryEmbedding []
 		FROM review_embeddings re
 		JOIN clean_reviews cr ON cr.id = re.review_id
 		WHERE
-			($3 IS NULL OR cr.app_id = $3)
+			cr.app_id = $3
 		ORDER BY re.content_vec <=> $1
 		LIMIT $2;
 	`
 
-	// Execute the query with parameters
 	rows, err := r.db.Query(ctx, query, queryVec, topK, appID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute RAG retrieval query: %w", err)
@@ -325,7 +319,7 @@ func (r *postgresRepository) RAGRetrieval(ctx context.Context, queryEmbedding []
 
 		review.ResponseContent = responseContent
 		review.Distance = distance
-		review.Similarity = 1.0 - distance // Convert distance to similarity
+		review.Similarity = 1.0 - distance
 		reviews = append(reviews, review)
 	}
 
