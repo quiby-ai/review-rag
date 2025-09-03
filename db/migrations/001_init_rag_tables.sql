@@ -1,13 +1,13 @@
 CREATE EXTENSION IF NOT EXISTS vector;
 
-CREATE INDEX IF NOT EXISTS idx_review_embeddings_hnsw ON review_embeddings USING hnsw (embedding vector_cosine_ops) WITH (m=16, ef_construction=64);
+CREATE INDEX IF NOT EXISTS idx_review_embeddings_hnsw ON review_embeddings USING hnsw (content_vec vector_cosine_ops) WITH (m=16, ef_construction=64);
 
-CREATE INDEX IF NOT EXISTS idx_review_embeddings_app_id ON review_embeddings(app_id);
-CREATE INDEX IF NOT EXISTS idx_review_embeddings_country ON review_embeddings(country);
-CREATE INDEX IF NOT EXISTS idx_review_embeddings_review_id ON review_embeddings(review_id);
-CREATE INDEX IF NOT EXISTS idx_clean_reviews_app_id ON clean_reviews(app_id);
-CREATE INDEX IF NOT EXISTS idx_clean_reviews_country ON clean_reviews(country);
-CREATE INDEX IF NOT EXISTS idx_clean_reviews_reviewed_at ON clean_reviews(reviewed_at);
+-- CREATE INDEX IF NOT EXISTS idx_review_embeddings_app_id ON review_embeddings(app_id);
+-- CREATE INDEX IF NOT EXISTS idx_review_embeddings_country ON review_embeddings(country);
+-- CREATE INDEX IF NOT EXISTS idx_review_embeddings_review_id ON review_embeddings(review_id);
+-- CREATE INDEX IF NOT EXISTS idx_clean_reviews_app_id ON clean_reviews(app_id);
+-- CREATE INDEX IF NOT EXISTS idx_clean_reviews_country ON clean_reviews(country);
+-- CREATE INDEX IF NOT EXISTS idx_clean_reviews_reviewed_at ON clean_reviews(reviewed_at);
 
 CREATE TABLE IF NOT EXISTS rag_query_logs (
     id SERIAL PRIMARY KEY,

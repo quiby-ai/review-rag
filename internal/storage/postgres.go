@@ -54,19 +54,28 @@ func NewPostgresRepository(dsn string) (Repository, error) {
 func (r *postgresRepository) initTables(ctx context.Context) error {
 	queries := []string{
 		`CREATE EXTENSION IF NOT EXISTS vector;`,
-		`CREATE INDEX IF NOT EXISTS idx_review_embeddings_hnsw ON review_embeddings USING hnsw (embedding vector_cosine_ops) WITH (m=16, ef_construction=64);`,
-		`CREATE INDEX IF NOT EXISTS idx_review_embeddings_app_id ON review_embeddings(app_id);`,
-		`CREATE INDEX IF NOT EXISTS idx_review_embeddings_country ON review_embeddings(country);`,
-		`CREATE INDEX IF NOT EXISTS idx_review_embeddings_review_id ON review_embeddings(review_id);`,
-		`CREATE INDEX IF NOT EXISTS idx_clean_reviews_app_id ON clean_reviews(app_id);`,
-		`CREATE INDEX IF NOT EXISTS idx_clean_reviews_country ON clean_reviews(country);`,
-		`CREATE INDEX IF NOT EXISTS idx_clean_reviews_reviewed_at ON clean_reviews(reviewed_at);`,
 		`SET hnsw.ef_search = 96;`,
+	}
+
+	indexQueries := []string{
+		`CREATE INDEX IF NOT EXISTS idx_review_embeddings_hnsw ON review_embeddings USING hnsw (content_vec vector_cosine_ops) WITH (m=16, ef_construction=64);`,
+		// `CREATE INDEX IF NOT EXISTS idx_review_embeddings_app_id ON review_embeddings(app_id);`,
+		// `CREATE INDEX IF NOT EXISTS idx_review_embeddings_country ON review_embeddings(country);`,
+		// `CREATE INDEX IF NOT EXISTS idx_review_embeddings_review_id ON review_embeddings(review_id);`,
+		// `CREATE INDEX IF NOT EXISTS idx_clean_reviews_app_id ON clean_reviews(app_id);`,
+		// `CREATE INDEX IF NOT EXISTS idx_clean_reviews_country ON clean_reviews(country);`,
+		// `CREATE INDEX IF NOT EXISTS idx_clean_reviews_reviewed_at ON clean_reviews(reviewed_at);`,
 	}
 
 	for i, query := range queries {
 		if _, err := r.db.Exec(ctx, query); err != nil {
 			return fmt.Errorf("failed to execute query %d: %w", i+1, err)
+		}
+	}
+
+	for _, query := range indexQueries {
+		if _, err := r.db.Exec(ctx, query); err != nil {
+			continue
 		}
 	}
 
@@ -277,12 +286,12 @@ func (r *postgresRepository) RAGRetrieval(ctx context.Context, queryEmbedding []
 			cr.country,
 			cr.language,
 			cr.reviewed_at AS date,
-			(re.embedding <=> $1) AS distance
+			(re.content_vec <=> $1) AS distance
 		FROM review_embeddings re
 		JOIN clean_reviews cr ON cr.id = re.review_id
 		WHERE
 			($3 IS NULL OR cr.app_id = $3)
-		ORDER BY re.embedding <=> $1
+		ORDER BY re.content_vec <=> $1
 		LIMIT $2;
 	`
 
